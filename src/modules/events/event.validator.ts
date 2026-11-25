@@ -14,6 +14,7 @@ export const eventIdSchema = z.object({
 
 export const eventQuerySchema = z.object({
   date: calendarDate.optional(),
+  status: z.enum(["UPCOMING", "FULL", "PAST"]).optional(),
 });
 
 export function toDate(value: string) {

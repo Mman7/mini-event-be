@@ -2,6 +2,14 @@ import type { RequestHandler } from "express";
 import type { ZodType } from "zod";
 import { AppError } from "../errors/app-error.js";
 
+declare global {
+  namespace Express {
+    interface Request {
+      validatedQuery?: unknown;
+    }
+  }
+}
+
 export function validate<T>(
   source: "body" | "params" | "query",
   schema: ZodType<T>,
@@ -14,7 +22,9 @@ export function validate<T>(
       return;
     }
 
-    if (source !== "query") {
+    if (source === "query") {
+      request.validatedQuery = result.data;
+    } else {
       request[source] = result.data;
     }
     next();

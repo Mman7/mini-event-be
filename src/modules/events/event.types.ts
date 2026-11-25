@@ -6,4 +6,5 @@ export type EventSummary = {
   maxAttendees: number;
   registeredCount: number;
   availableSlots: number;
+  status: "UPCOMING" | "FULL" | "PAST";
 };

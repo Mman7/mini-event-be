@@ -10,6 +10,8 @@ const envSchema = z.object({
     .default("development-only-secret-change-before-production-1234"),
   BETTER_AUTH_URL: z.string().url().default("http://localhost:5000"),
   FRONTEND_URL: z.string().url().default("http://localhost:3001"),
+  ADMIN_EMAIL: z.string().email(),
+  ADMIN_PASSWORD: z.string().min(8),
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),

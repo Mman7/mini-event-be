@@ -1,110 +1,132 @@
 # Mini Event Booking API
 
-Backend-only event booking API built with Node.js, Express, TypeScript, Prisma ORM 7, Zod, and MySQL.
+Backend-only event booking API built with Node.js, Express, TypeScript, Prisma ORM 7, Zod, Better Auth, and MySQL. A separate frontend can consume the API over HTTP; no frontend application is included in this repository.
 
 ## Architecture
 
-The request flow is:
+Requests flow through:
 
 `route -> Zod validation -> controller -> service -> repository -> Prisma Client -> MySQL`
 
-Feature code lives under `src/modules/events`, `src/modules/users`, and `src/modules/registrations`. Shared errors, validation middleware, and response helpers live under `src/shared`. Prisma is initialized once in `src/infrastructure/database/prisma.ts` with `@prisma/adapter-mariadb`.
+Feature code is under `src/modules`. Shared errors, validation middleware, and response helpers are under `src/shared`. Prisma is initialized once in `src/infrastructure/database/prisma.ts` with the MariaDB driver adapter.
 
-## Setup
+## Backend setup
 
-1. Install Node.js 20.19 or newer and MySQL.
-2. Copy `.env.example` to `.env` and set `DATABASE_URL`.
-3. Install dependencies:
+### Requirements
+
+- Node.js 20.19 or newer
+- MySQL 8 or a compatible MariaDB server
+- npm
+
+Create an empty database, for example `mini_event_db`, then configure the connection string in `.env`.
+
+### Install and configure
 
 ```bash
+git clone <repository-url>
+cd mini-event-backend
 npm install
+copy .env.example .env
 ```
 
-4. Generate the Prisma client:
+On macOS or Linux, use `cp .env.example .env` instead of `copy`.
+
+Update `.env` with the database credentials and admin account:
+
+```dotenv
+DATABASE_URL="mysql://username:password@localhost:3306/mini_event_db"
+PORT=5000
+NODE_ENV=development
+BETTER_AUTH_SECRET="replace-with-at-least-32-characters"
+BETTER_AUTH_URL="http://localhost:5000"
+FRONTEND_URL="http://localhost:3000"
+ADMIN_EMAIL="admin@example.com"
+ADMIN_PASSWORD="replace-with-a-password-of-at-least-8-characters"
+```
+
+`DATABASE_URL` must use the `mysql://` scheme. `BETTER_AUTH_SECRET` must be at least 32 characters and `ADMIN_PASSWORD` must be at least 8 characters.
+
+### Initialize the database
+
+Generate the Prisma client, apply the checked-in migrations, and load development data:
 
 ```bash
 npm run generate
-```
-
-5. Apply migrations, including the Better Auth tables:
-
-```bash
-npm run migrate:dev -- --name init
-```
-
-6. Seed test data:
-
-```bash
+npm run migrate:dev
 npm run seed
 ```
 
-7. Start the API:
+The seed resets application data, creates the configured admin account, three sample users, and 20 events. Do not run it against a database whose data must be preserved.
+
+### Run the backend
 
 ```bash
 npm run dev
 ```
 
-The default server URL is `http://localhost:5000`.
+The API is available at `http://localhost:5000`. For a production-style run:
 
-## Database
+```bash
+npm run build
+npm start
+```
 
-`User.email` is unique. Better Auth stores email/password accounts and HTTP-only sessions in the `Account` and `Session` tables. `Registration` has foreign keys to `User` and `Event`, a unique `(userId, eventId)` constraint, and status-aware indexes. `Event.eventDate` uses MySQL `DATE`; `availableSlots` is calculated from `maxAttendees` and confirmed registrations and is not stored.
+## Database structure
 
-The development database was inspected with `information_schema.TABLES` and currently reports `InnoDB` for `User`, `Event`, `Registration`, and `_prisma_migrations`. InnoDB supports the transactions and row-level locks used by registration.
+| Table          | Purpose                                    | Important constraints                                              |
+| -------------- | ------------------------------------------ | ------------------------------------------------------------------ |
+| `User`         | Application users and roles                | Unique `email`; `role` is `USER` or `ADMIN`                        |
+| `Account`      | Better Auth email/password account records | Unique `(providerId, accountId)`; belongs to `User`                |
+| `Session`      | Better Auth HTTP-only login sessions       | Unique `token`; cascades when its user is deleted                  |
+| `Event`        | Bookable events                            | `eventDate` is a MySQL `DATE`; `maxAttendees` must be positive     |
+| `Registration` | User-to-event bookings and cancellations   | Unique `(userId, eventId)`; `status` is `CONFIRMED` or `CANCELLED` |
 
-## Concurrency strategy
+`Registration.userId` and `Registration.eventId` are foreign keys. User deletion cascades to accounts and sessions; registrations preserve their event history unless removed by the database relationship rules. Indexes support event-date queries, user registration lookups, and status-filtered registration queries.
 
-Registration runs in one interactive Prisma transaction. It reads the authenticated Better Auth user, locks the user row, then locks the event row with `SELECT ... FOR UPDATE`. It checks same-date confirmed registrations and capacity while both locks are held, then inserts the registration. Requests acquire locks in the same user-then-event order to reduce deadlocks. The database unique constraint remains the final duplicate-registration safeguard.
+`registeredCount`, `availableSlots`, and event `status` are calculated values, not columns. `availableSlots` is `maxAttendees` minus confirmed registrations. Event status is `PAST` when its date has passed, `FULL` when confirmed registrations reach capacity, and `UPCOMING` otherwise.
 
-If deployed against a non-InnoDB engine, these transaction and row-lock guarantees must be considered unavailable and the engine limitation must be addressed before claiming race-free registration.
+Registration uses one Prisma transaction with user and event row locks. It checks capacity, duplicate registration, past dates, and same-date bookings while the locks are held. Keep the tables on an InnoDB-compatible engine so these transaction guarantees remain valid.
 
-## API
+## Validation logic
+
+All validated input passes through the shared `validate` middleware. Zod failures return HTTP 422 with `message: "Validation failed."` and flattened field errors. Route parameters are coerced to positive integers, so IDs such as `0`, negative values, decimals, and non-numeric strings are rejected.
+
+### Public event endpoints
+
+- `GET /api/events` accepts an optional `date` in valid `YYYY-MM-DD` format and an optional `status` of `UPCOMING`, `FULL`, or `PAST`.
+- `GET /api/events/:id` validates the positive integer `id`.
+- Invalid calendar dates, including impossible dates such as `2026-02-30`, are rejected.
+
+### Registration endpoints
+
+- `POST /api/events/:id/registrations` requires authentication, a valid event ID, and an empty JSON object. Unknown body fields are rejected.
+- `DELETE /api/events/:id/registrations` requires authentication and a valid event ID.
+- Business conflicts such as duplicate registration, a full event, a past event, or another confirmed event on the same date return HTTP 409.
+
+### Admin endpoints
+
+- Event input requires a non-empty trimmed `title` up to 200 characters, an optional trimmed `description` up to 5,000 characters, a valid calendar `eventDate`, and a positive integer `maxAttendees`.
+- Event queries support trimmed `search`, `date`, `status`, and positive `page` and `pageSize`; `pageSize` is capped at 100.
+- Registration queries support trimmed `search`, `status` (`CONFIRMED` or `CANCELLED`), a positive `eventId`, `page`, and `pageSize`.
+- Admin routes require an authenticated session and `User.role = ADMIN`; authenticated non-admin users receive HTTP 403.
+
+## API overview
 
 ### Authentication
 
-Better Auth provides email/password authentication under `/api/auth`. Sign up with `POST /api/auth/sign-up/email`, sign in with `POST /api/auth/sign-in/email`, and sign out with `POST /api/auth/sign-out`. Successful sign-up and sign-in responses set an HTTP-only session cookie. Send the cookie with protected requests.
+Better Auth provides email/password endpoints under `/api/auth`: `POST /sign-up/email`, `POST /sign-in/email`, `POST /sign-out`, and `GET /get-session`. Successful authentication sets an HTTP-only session cookie.
 
-Registration requires an authenticated session and accepts an empty JSON object. The authenticated account, rather than request-body identity fields, determines which user is registered.
+### Events and registrations
 
-### `GET /api/events`
+- `GET /api/events` lists events with calculated counts, availability, and status.
+- `GET /api/events/:id` returns one event.
+- `GET /api/registrations` lists the authenticated user's registrations.
+- `POST /api/events/:id/registrations` registers the authenticated user.
+- `DELETE /api/events/:id/registrations` cancels the authenticated user's registration while retaining its history.
 
-Returns all events with `registeredCount` and calculated `availableSlots`. Add `?date=2026-11-28` to filter by calendar date.
+### Admin
 
-### `GET /api/events/:id`
-
-Returns one event or a 404 response.
-
-### `POST /api/events/:id/registrations`
-
-Requires the Better Auth session cookie. Request body:
-
-```json
-{}
-```
-
-Successful response:
-
-```json
-{
-  "success": true,
-  "message": "Registered successfully."
-}
-```
-
-Unauthenticated requests return 401. Validation errors return 422. Missing events return 404. Same-date, duplicate, past-event, and full-event conflicts return 409. Unexpected errors return 500 without database credentials or production stack traces.
-
-### `DELETE /api/events/:id/registrations`
-
-Requires the Better Auth session cookie. Cancels the authenticated user's registration and returns:
-
-```json
-{
-  "success": true,
-  "message": "Registration cancelled successfully."
-}
-```
-
-The registration is retained with `CANCELLED` status so its history is preserved.
+The admin API is under `/api/admin`: dashboard totals, event search and CRUD, registration search, and registration cancellation. Events with registrations cannot be deleted, and capacity cannot be lowered below the number of confirmed registrations.
 
 ## Verification
 
@@ -112,4 +134,5 @@ The registration is retained with `CANCELLED` status so its history is preserved
 npm run typecheck
 npm test
 npm run build
+npm run postman:generate
 ```

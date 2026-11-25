@@ -19,6 +19,10 @@
     {
       "name": "Registrations",
       "description": "Register users for events"
+    },
+    {
+      "name": "Admin",
+      "description": "Role-protected dashboard and management endpoints"
     }
   ],
   "paths": {
@@ -366,6 +370,120 @@
           }
         }
       }
+    },
+    "/api/admin/dashboard": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get dashboard metrics",
+        "operationId": "getAdminDashboard",
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/SuccessResponse" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" }
+        }
+      }
+    },
+    "/api/admin/events": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "List admin events",
+        "operationId": "listAdminEvents",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/AdminQuery" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/SuccessResponse" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" }
+        }
+      },
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Create an event",
+        "operationId": "createAdminEvent",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": { "$ref": "#/components/requestBodies/EventInput" },
+        "responses": {
+          "201": { "$ref": "#/components/responses/SuccessResponse" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/api/admin/registrations": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "List registrations",
+        "operationId": "listAdminRegistrations",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/AdminQuery" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/SuccessResponse" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" }
+        }
+      }
+    },
+    "/api/admin/events/{id}": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get an admin event",
+        "operationId": "getAdminEvent",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/SuccessResponse" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      },
+      "put": {
+        "tags": ["Admin"],
+        "summary": "Update an admin event",
+        "operationId": "updateAdminEvent",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "requestBody": { "$ref": "#/components/requestBodies/EventInput" },
+        "responses": {
+          "200": { "$ref": "#/components/responses/SuccessResponse" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        }
+      },
+      "delete": {
+        "tags": ["Admin"],
+        "summary": "Delete an admin event",
+        "operationId": "deleteAdminEvent",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/EventId" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/MessageResponse" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        }
+      }
+    },
+    "/api/admin/registrations/{id}": {
+      "delete": {
+        "tags": ["Admin"],
+        "summary": "Cancel a registration",
+        "operationId": "cancelAdminRegistration",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/RegistrationId" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/MessageResponse" },
+          "401": { "$ref": "#/components/responses/UnauthorizedError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        }
+      }
     }
   },
   "components": {
@@ -401,6 +519,14 @@
         },
         "example": 1
       },
+      "RegistrationId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Positive integer registration identifier.",
+        "schema": { "type": "integer", "format": "int32", "minimum": 1 },
+        "example": 1
+      },
       "EventDateQuery": {
         "name": "date",
         "in": "query",
@@ -410,6 +536,26 @@
           "type": "string",
           "format": "date",
           "example": "2026-11-28"
+        }
+      },
+      "AdminQuery": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "description": "Pagination and admin filtering parameters. Use pageSize, search, date, status, or eventId as applicable.",
+        "schema": {
+          "type": "string",
+          "example": "page=1&pageSize=20&status=UPCOMING"
+        }
+      }
+    },
+    "requestBodies": {
+      "EventInput": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/EventInput" }
+          }
         }
       }
     },
@@ -423,7 +569,8 @@
           "eventDate",
           "maxAttendees",
           "registeredCount",
-          "availableSlots"
+          "availableSlots",
+          "status"
         ],
         "properties": {
           "id": {
@@ -459,6 +606,11 @@
             "type": "integer",
             "minimum": 0,
             "example": 18
+          },
+          "status": {
+            "type": "string",
+            "enum": ["UPCOMING", "FULL", "PAST"],
+            "example": "UPCOMING"
           }
         }
       },
@@ -553,6 +705,24 @@
           "image": { "type": "string", "nullable": true, "example": null }
         }
       },
+      "EventInput": {
+        "type": "object",
+        "required": ["title", "eventDate", "maxAttendees"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "example": "TypeScript Workshop"
+          },
+          "description": { "type": "string", "nullable": true },
+          "eventDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-28"
+          },
+          "maxAttendees": { "type": "integer", "minimum": 1, "example": 30 }
+        }
+      },
       "AuthResponse": {
         "type": "object",
         "required": ["token", "user"],
@@ -642,6 +812,38 @@
       }
     },
     "responses": {
+      "SuccessResponse": {
+        "description": "Request completed successfully.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["success", "data"],
+              "properties": {
+                "success": { "type": "boolean", "example": true },
+                "data": { "type": "object", "additionalProperties": true }
+              }
+            }
+          }
+        }
+      },
+      "ForbiddenError": {
+        "description": "The authenticated user does not have the ADMIN role.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": { "success": false, "message": "Admin access required." }
+          }
+        }
+      },
+      "ConflictError": {
+        "description": "The requested operation conflicts with the current resource state.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
       "AuthSuccess": {
         "description": "Authentication request completed successfully. An HTTP-only session cookie is set when applicable.",
         "headers": {

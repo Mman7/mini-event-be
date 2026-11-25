@@ -12,6 +12,18 @@ function formatDate(value: Date) {
   return value.toISOString().slice(0, 10);
 }
 
+function getStatus(
+  eventDate: Date,
+  registeredCount: number,
+  maxAttendees: number,
+) {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  if (eventDate < today) return "PAST" as const;
+  if (registeredCount >= maxAttendees) return "FULL" as const;
+  return "UPCOMING" as const;
+}
+
 async function summarizeEvent(
   event: Awaited<ReturnType<typeof findEventById>>,
 ): Promise<EventSummary> {
@@ -28,12 +40,17 @@ async function summarizeEvent(
     maxAttendees: event.maxAttendees,
     registeredCount,
     availableSlots: Math.max(event.maxAttendees - registeredCount, 0),
+    status: getStatus(event.eventDate, registeredCount, event.maxAttendees),
   };
 }
 
-export async function listEvents(date?: string): Promise<EventSummary[]> {
+export async function listEvents(
+  date?: string,
+  status?: EventSummary["status"],
+): Promise<EventSummary[]> {
   const events = await findEvents(prisma, date ? toDate(date) : undefined);
-  return Promise.all(events.map(summarizeEvent));
+  const summaries = await Promise.all(events.map(summarizeEvent));
+  return summaries.filter((event) => !status || event.status === status);
 }
 
 export async function getEvent(eventId: number): Promise<EventSummary> {

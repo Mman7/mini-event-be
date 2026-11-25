@@ -5,6 +5,7 @@ import { auth } from "./infrastructure/auth/auth.js";
 import { env } from "./config/env.js";
 import { eventRoutes } from "./modules/events/event.routes.js";
 import { registrationRoutes } from "./modules/registrations/registration.routes.js";
+import { adminRoutes } from "./modules/admin/admin.routes.js";
 import { errorMiddleware } from "./shared/middlewares/error.middleware.js";
 import { notFoundMiddleware } from "./shared/middlewares/not-found.middleware.js";
 
@@ -62,6 +63,7 @@ const authResponseHandler: RequestHandler = (request, response, next) => {
         id?: unknown;
         name?: unknown;
         email?: unknown;
+        role?: unknown;
       } | null;
     } = {};
     try {
@@ -86,6 +88,7 @@ const authResponseHandler: RequestHandler = (request, response, next) => {
                 id: payload.user.id,
                 name: payload.user.name,
                 email: payload.user.email,
+                role: payload.user.role,
               }
             : null,
         }),
@@ -118,7 +121,10 @@ app.use((req, res, next) => {
   if (origin && frontendOrigins.has(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,DELETE,OPTIONS",
+    );
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
     res.setHeader("Vary", "Origin");
   }
@@ -131,6 +137,7 @@ app.use((req, res, next) => {
 
 app.all("/api/auth/*splat", authResponseHandler);
 app.use(express.json());
+app.use("/api/admin", adminRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api", registrationRoutes);
 app.use(notFoundMiddleware);

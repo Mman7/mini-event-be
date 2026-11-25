@@ -84,6 +84,36 @@ test("sign-in returns only the user and a success message", async () => {
   }
 });
 
+test("admin event pagination uses numeric query values", async () => {
+  const suffix = Date.now().toString();
+  const email = `admin-pagination-${suffix}@example.com`;
+  const server = app.listen(0);
+  const address = server.address() as AddressInfo;
+  const baseUrl = `http://127.0.0.1:${address.port}`;
+
+  try {
+    const cookie = await signUp(baseUrl, email, "Admin Pagination User");
+    await prisma.user.update({
+      where: { email },
+      data: { role: "ADMIN" },
+    });
+
+    const response = await fetch(
+      `${baseUrl}/api/admin/events?page=1&pageSize=100`,
+      { headers: { cookie } },
+    );
+    const body = await response.json();
+
+    assert.equal(response.status, 200, JSON.stringify(body));
+    assert.equal(body.data.page, 1);
+    assert.equal(body.data.pageSize, 100);
+  } finally {
+    await prisma.user.deleteMany({ where: { email } });
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    await prisma.$disconnect();
+  }
+});
+
 test("users can cancel their own event registration", async () => {
   const suffix = Date.now().toString();
   const email = `cancel-${suffix}@example.com`;

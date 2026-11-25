@@ -3,7 +3,10 @@ import { sendSuccess } from "../../shared/utils/api-response.js";
 import { getEvent, listEvents } from "./event.service.js";
 
 export async function getEvents(request: Request, response: Response) {
-  const events = await listEvents(request.query.date as string | undefined);
+  const events = await listEvents(
+    request.query.date as string | undefined,
+    request.query.status as "UPCOMING" | "FULL" | "PAST" | undefined,
+  );
   return sendSuccess(response, events);
 }
 

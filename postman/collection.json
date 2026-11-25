@@ -255,6 +255,204 @@
         },
         "description": "Cancel an event registration"
       }
+    },
+    {
+      "name": "Get dashboard metrics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/admin/dashboard",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "dashboard"
+          ]
+        },
+        "description": "Get dashboard metrics"
+      }
+    },
+    {
+      "name": "List admin events",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/admin/events",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "events"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "List admin events"
+      }
+    },
+    {
+      "name": "Create an event",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/admin/events",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "events"
+          ]
+        },
+        "description": "Create an event"
+      }
+    },
+    {
+      "name": "List registrations",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/admin/registrations",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "registrations"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "List registrations"
+      }
+    },
+    {
+      "name": "Get an admin event",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/admin/events/{id}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "events",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "type": "string"
+            }
+          ]
+        },
+        "description": "Get an admin event"
+      }
+    },
+    {
+      "name": "Update an admin event",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/admin/events/{id}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "events",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "type": "string"
+            }
+          ]
+        },
+        "description": "Update an admin event"
+      }
+    },
+    {
+      "name": "Delete an admin event",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/admin/events/{id}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "events",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "type": "string"
+            }
+          ]
+        },
+        "description": "Delete an admin event"
+      }
+    },
+    {
+      "name": "Cancel a registration",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/admin/registrations/{id}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "registrations",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "type": "string"
+            }
+          ]
+        },
+        "description": "Cancel a registration"
+      }
     }
   ]
 }

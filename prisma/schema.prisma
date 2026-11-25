@@ -17,12 +17,18 @@ enum RegistrationStatus {
   CANCELLED
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
   id            Int            @id @default(autoincrement())
   name          String
   email         String         @unique
   emailVerified Boolean        @default(false)
   image         String?
+  role          UserRole       @default(USER)
   registrations Registration[]
   sessions      Session[]
   accounts      Account[]

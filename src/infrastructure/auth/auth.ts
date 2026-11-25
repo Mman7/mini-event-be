@@ -50,6 +50,15 @@ export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [env.BETTER_AUTH_URL, env.FRONTEND_URL, "http://127.0.0.1:*"],
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        defaultValue: "USER",
+        input: false,
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
   },

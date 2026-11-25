@@ -1,10 +1,6 @@
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import { PrismaClient } from "../generated/prisma/client.js";
 import { env } from "../src/config/env.js";
-
-const prisma = new PrismaClient({
-  adapter: new PrismaMariaDb(env.DATABASE_URL),
-});
+import { auth } from "../src/infrastructure/auth/auth.js";
+import { prisma } from "../src/infrastructure/database/prisma.js";
 const date = (daysFromToday: number) => {
   const value = new Date();
   value.setUTCHours(0, 0, 0, 0);
@@ -18,6 +14,22 @@ async function main() {
   await prisma.session.deleteMany();
   await prisma.account.deleteMany();
   await prisma.user.deleteMany();
+
+  const adminSignup = await auth.api.signUpEmail({
+    body: {
+      name: "Admin User",
+      email: env.ADMIN_EMAIL,
+      password: env.ADMIN_PASSWORD,
+    },
+    headers: new Headers({ origin: env.BETTER_AUTH_URL }),
+  });
+  if (!adminSignup.user) {
+    throw new Error("Unable to create the seeded admin account.");
+  }
+  await prisma.user.update({
+    where: { email: env.ADMIN_EMAIL },
+    data: { role: "ADMIN" },
+  });
 
   const [alice, bob, cara] = await Promise.all([
     prisma.user.create({

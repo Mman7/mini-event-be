@@ -23,6 +23,16 @@ export async function findConfirmedRegistrationOnDate(
   });
 }
 
+export async function findConfirmedRegistrationCreatedSince(
+  client: RegistrationDatabase,
+  userId: number,
+  since: Date,
+) {
+  return client.registration.findFirst({
+    where: { userId, status: "CONFIRMED", createdAt: { gte: since } },
+  });
+}
+
 export async function findRegistrationForEvent(
   client: RegistrationDatabase,
   userId: number,

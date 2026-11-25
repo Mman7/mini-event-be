@@ -10,6 +10,7 @@ import {
   confirmRegistration,
   cancelRegistration,
   findConfirmedRegistrationsForUser,
+  findConfirmedRegistrationCreatedSince,
   findConfirmedRegistrationOnDate,
   findRegistrationForEvent,
 } from "./registration.repository.js";
@@ -71,6 +72,17 @@ export async function registerForEvent(
           409,
           "You already registered for an event on this date.",
         );
+      }
+
+      const startOfToday = new Date();
+      startOfToday.setUTCHours(0, 0, 0, 0);
+      const registeredToday = await findConfirmedRegistrationCreatedSince(
+        transaction,
+        user.id,
+        startOfToday,
+      );
+      if (registeredToday) {
+        throw new AppError(409, "You already registered for an event today.");
       }
 
       const registeredCount = await countConfirmedRegistrations(
