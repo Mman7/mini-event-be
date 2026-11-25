@@ -1,0 +1,765 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Mini Event Booking API",
+    "version": "1.0.0",
+    "description": "Backend API for browsing events and registering authenticated users. Event browsing is public; registration requires a Better Auth session cookie."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Events",
+      "description": "Browse available events"
+    },
+    {
+      "name": "Registrations",
+      "description": "Register users for events"
+    }
+  ],
+  "paths": {
+    "/api/auth/sign-up/email": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Create an account",
+        "description": "Creates an email/password account and sets an HTTP-only session cookie.",
+        "operationId": "signUpEmail",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AuthOrigin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpRequest"
+              },
+              "example": {
+                "name": "John Doe",
+                "email": "john@example.com",
+                "password": "password1234"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/AuthSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/AuthError"
+          },
+          "422": {
+            "$ref": "#/components/responses/AuthError"
+          }
+        }
+      }
+    },
+    "/api/auth/sign-in/email": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Sign in",
+        "description": "Authenticates an email/password account and sets an HTTP-only session cookie.",
+        "operationId": "signInEmail",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AuthOrigin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInRequest"
+              },
+              "example": {
+                "email": "john@example.com",
+                "password": "password1234"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SignInSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/AuthError"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthError"
+          }
+        }
+      }
+    },
+    "/api/auth/sign-out": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Sign out",
+        "description": "Invalidates the current HTTP-only session cookie.",
+        "operationId": "signOut",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AuthOrigin"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/AuthSuccess"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthError"
+          }
+        }
+      }
+    },
+    "/api/auth/get-session": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Get the current session",
+        "operationId": "getSession",
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Current session returned, or null when no session exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                },
+                "example": {
+                  "session": {
+                    "id": "session-id",
+                    "expiresAt": "2026-12-25T00:00:00.000Z",
+                    "userId": "1",
+                    "createdAt": "2026-11-25T07:27:34.783Z"
+                  },
+                  "user": {
+                    "id": "1",
+                    "name": "John Doe",
+                    "email": "john@example.com"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events": {
+      "get": {
+        "tags": ["Events"],
+        "summary": "List events",
+        "description": "Returns all events, optionally filtered by calendar date.",
+        "operationId": "listEvents",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EventDateQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Events returned successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventListResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": 1,
+                      "title": "TypeScript Workshop",
+                      "description": "Hands-on TypeScript fundamentals.",
+                      "eventDate": "2026-11-28",
+                      "maxAttendees": 30,
+                      "registeredCount": 12,
+                      "availableSlots": 18
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/events/{id}": {
+      "get": {
+        "tags": ["Events"],
+        "summary": "Get event details",
+        "operationId": "getEvent",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EventId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event returned successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": 1,
+                    "title": "TypeScript Workshop",
+                    "description": "Hands-on TypeScript fundamentals.",
+                    "eventDate": "2026-11-28",
+                    "maxAttendees": 30,
+                    "registeredCount": 12,
+                    "availableSlots": 18
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/events/{id}/registrations": {
+      "post": {
+        "tags": ["Registrations"],
+        "summary": "Register for an event",
+        "description": "Registers the authenticated user. A user cannot register for more than one event on the same calendar date, and an event cannot exceed its capacity.",
+        "operationId": "registerForEvent",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EventId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmptyRequest"
+              },
+              "example": {}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registration created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Registered successfully."
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "409": {
+            "description": "Registration conflicts with an existing registration, event capacity, event date, or past-event rule.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "duplicate": {
+                    "value": {
+                      "success": false,
+                      "message": "You are already registered for this event."
+                    }
+                  },
+                  "sameDate": {
+                    "value": {
+                      "success": false,
+                      "message": "You already registered for an event on this date."
+                    }
+                  },
+                  "full": {
+                    "value": {
+                      "success": false,
+                      "message": "This event is fully booked."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Registrations"],
+        "summary": "Cancel an event registration",
+        "description": "Cancels the authenticated user's registration while preserving its registration history.",
+        "operationId": "cancelRegistration",
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EventId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registration cancelled successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Registration cancelled successfully."
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "better-auth.session_token",
+        "description": "HTTP-only session cookie set by Better Auth after sign-up or sign-in."
+      }
+    },
+    "parameters": {
+      "AuthOrigin": {
+        "name": "Origin",
+        "in": "header",
+        "required": true,
+        "description": "Trusted application origin used by Better Auth CSRF protection.",
+        "schema": {
+          "type": "string",
+          "format": "uri",
+          "example": "http://localhost:5000"
+        }
+      },
+      "EventId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Positive integer event identifier.",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1
+        },
+        "example": 1
+      },
+      "EventDateQuery": {
+        "name": "date",
+        "in": "query",
+        "required": false,
+        "description": "Filter by calendar date in YYYY-MM-DD format.",
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2026-11-28"
+        }
+      }
+    },
+    "schemas": {
+      "Event": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "description",
+          "eventDate",
+          "maxAttendees",
+          "registeredCount",
+          "availableSlots"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "TypeScript Workshop"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Hands-on TypeScript fundamentals."
+          },
+          "eventDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-28"
+          },
+          "maxAttendees": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 30
+          },
+          "registeredCount": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 12
+          },
+          "availableSlots": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 18
+          }
+        }
+      },
+      "EventListResponse": {
+        "type": "object",
+        "required": ["success", "data"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
+          }
+        }
+      },
+      "EventResponse": {
+        "type": "object",
+        "required": ["success", "data"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/Event"
+          }
+        }
+      },
+      "SignUpRequest": {
+        "type": "object",
+        "required": ["name", "email", "password"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "format": "password",
+            "example": "password1234"
+          }
+        }
+      },
+      "SignInRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "format": "password",
+            "example": "password1234"
+          }
+        }
+      },
+      "EmptyRequest": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AuthUser": {
+        "type": "object",
+        "required": ["id", "name", "email", "emailVerified"],
+        "properties": {
+          "id": { "type": "string", "example": "1" },
+          "name": { "type": "string", "example": "John Doe" },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "emailVerified": { "type": "boolean", "example": false },
+          "image": { "type": "string", "nullable": true, "example": null }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "required": ["token", "user"],
+        "properties": {
+          "token": {
+            "type": "string",
+            "nullable": true,
+            "example": "session-token"
+          },
+          "user": { "$ref": "#/components/schemas/AuthUser" }
+        }
+      },
+      "SignInResponse": {
+        "type": "object",
+        "required": ["success", "message", "user"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": {
+            "type": "string",
+            "example": "Signed in successfully."
+          },
+          "user": { "$ref": "#/components/schemas/AuthUser" }
+        }
+      },
+      "SessionResponse": {
+        "type": "object",
+        "nullable": true,
+        "required": ["session", "user"],
+        "properties": {
+          "session": {
+            "type": "object",
+            "nullable": true,
+            "required": ["id", "expiresAt", "userId", "createdAt"],
+            "properties": {
+              "id": { "type": "string" },
+              "expiresAt": { "type": "string", "format": "date-time" },
+              "userId": { "type": "string" },
+              "createdAt": { "type": "string", "format": "date-time" }
+            },
+            "additionalProperties": false
+          },
+          "user": {
+            "type": "object",
+            "nullable": true,
+            "required": ["id", "name", "email"],
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "email": { "type": "string", "format": "email" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "MessageResponse": {
+        "type": "object",
+        "required": ["success", "message"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Registered successfully."
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["success", "message"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Event not found."
+          },
+          "details": {
+            "type": "object",
+            "description": "Validation details, present for 422 responses.",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "responses": {
+      "AuthSuccess": {
+        "description": "Authentication request completed successfully. An HTTP-only session cookie is set when applicable.",
+        "headers": {
+          "Set-Cookie": {
+            "description": "Better Auth HTTP-only session cookie.",
+            "schema": { "type": "string" }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/AuthResponse" },
+            "example": {
+              "token": "session-token",
+              "user": {
+                "id": "1",
+                "name": "John Doe",
+                "email": "john@example.com",
+                "emailVerified": false
+              }
+            }
+          }
+        }
+      },
+      "SignInSuccess": {
+        "description": "Sign-in completed successfully and an HTTP-only session cookie was set.",
+        "headers": {
+          "Set-Cookie": {
+            "description": "Better Auth HTTP-only session cookie.",
+            "schema": { "type": "string" }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/SignInResponse" },
+            "example": {
+              "success": true,
+              "message": "Signed in successfully.",
+              "user": {
+                "id": "1",
+                "name": "John Doe",
+                "email": "john@example.com",
+                "emailVerified": false
+              }
+            }
+          }
+        }
+      },
+      "AuthError": {
+        "description": "Authentication request failed.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": {
+              "message": "Invalid email or password."
+            }
+          }
+        }
+      },
+      "UnauthorizedError": {
+        "description": "A valid Better Auth session cookie is required.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": {
+              "success": false,
+              "message": "Authentication required."
+            }
+          }
+        }
+      },
+      "NotFoundError": {
+        "description": "The requested event does not exist.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "success": false,
+              "message": "Event not found."
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Request validation failed.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "success": false,
+              "message": "Validation failed.",
+              "details": {
+                "fieldErrors": {
+                  "email": ["Invalid email address"]
+                },
+                "formErrors": []
+              }
+            }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "Unexpected server error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "success": false,
+              "message": "Internal server error."
+            }
+          }
+        }
+      }
+    }
+  }
+}

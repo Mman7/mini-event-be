@@ -1,0 +1,260 @@
+{
+  "info": {
+    "name": "Mini Event Booking API",
+    "description": "Generated from docs/openapi.json. Run npm run postman:generate after changing the OpenAPI document.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Create an account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Origin",
+            "value": "http://localhost:5000",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/sign-up/email",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "sign-up",
+            "email"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password1234\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "description": "Create an account"
+      }
+    },
+    {
+      "name": "Sign in",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Origin",
+            "value": "http://localhost:5000",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/sign-in/email",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "sign-in",
+            "email"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password1234\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "description": "Sign in"
+      }
+    },
+    {
+      "name": "Sign out",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Origin",
+            "value": "http://localhost:5000",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/sign-out",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "sign-out"
+          ]
+        },
+        "description": "Sign out"
+      }
+    },
+    {
+      "name": "Get the current session",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/auth/get-session",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "get-session"
+          ]
+        },
+        "description": "Get the current session"
+      }
+    },
+    {
+      "name": "List events",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/events",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "events"
+          ],
+          "query": [
+            {
+              "key": "date",
+              "value": "",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "List events"
+      }
+    },
+    {
+      "name": "Get event details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/events/{id}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "events",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "type": "string"
+            }
+          ]
+        },
+        "description": "Get event details"
+      }
+    },
+    {
+      "name": "Register for an event",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/events/{id}/registrations",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "events",
+            ":id",
+            "registrations"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "description": "Register for an event"
+      }
+    },
+    {
+      "name": "Cancel an event registration",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/events/{id}/registrations",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "events",
+            ":id",
+            "registrations"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "type": "string"
+            }
+          ]
+        },
+        "description": "Cancel an event registration"
+      }
+    }
+  ]
+}
